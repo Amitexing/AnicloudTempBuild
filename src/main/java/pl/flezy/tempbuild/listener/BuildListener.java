@@ -1,5 +1,6 @@
 package pl.flezy.tempbuild.listener;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -85,12 +86,16 @@ public class BuildListener implements Listener {
 
     @EventHandler
     public void onBlockExplodeEvent(BlockExplodeEvent event) {
-        event.blockList().removeIf(block -> TempBuildManager.isRegion(block.getLocation()));
+        if (TempBuild.getInstance().config.protectFromExplosions) {
+            event.blockList().removeIf(block -> TempBuildManager.isRegion(block.getLocation()));
+        }
     }
 
     @EventHandler
     public void onEntityExplodeEvent(EntityExplodeEvent event) {
-        event.blockList().removeIf(block -> TempBuildManager.isRegion(block.getLocation()));
+        if (TempBuild.getInstance().config.protectFromExplosions) {
+            event.blockList().removeIf(block -> TempBuildManager.isRegion(block.getLocation()));
+        }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -155,6 +160,11 @@ public class BuildListener implements Listener {
 
             if (TempBuild.getInstance().config.blockedBlocks.contains(insideBucketMaterial)) {
                 event.setCancelled(true);
+                return;
+            }
+
+            if (block.isEmpty()) {
+                BlockDecayManager.addPlayerBlock(location);
             }
         }
     }

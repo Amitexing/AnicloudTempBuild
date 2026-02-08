@@ -1,5 +1,6 @@
 package pl.flezy.tempbuild.manager;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -7,11 +8,9 @@ import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.scheduler.BukkitTask;
 import pl.flezy.tempbuild.TempBuild;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
@@ -60,7 +59,7 @@ public class BlockDecayManager {
                         int entityId = blockEntityIds.get(location);
 
                         // Send only to nearby players
-                        for (Player player : location.getWorld().getNearbyPlayers(location, 64)) {
+                        for (Player player : location.getWorld().getPlayers()) {
                             player.sendBlockDamage(location, progress, entityId);
                         }
                     }
@@ -98,7 +97,7 @@ public class BlockDecayManager {
     private static void clearBlock(Location location) {
         Integer entityId = blockEntityIds.remove(location);
         if (entityId != null) {
-            for (Player player : location.getWorld().getNearbyPlayers(location, 64)) {
+            for (Player player : location.getWorld().getPlayers()) {
                 player.sendBlockDamage(location, 0f, entityId);
             }
         }
@@ -111,9 +110,9 @@ public class BlockDecayManager {
 
         if (TempBuild.getInstance().config.dropBlocks) {
             block.breakNaturally();
-        } else {
-            block.setType(Material.AIR);
         }
+
+        block.setType(Material.AIR);
 
         BlockData data = placedBlocks.get(location);
         if (data instanceof Bisected bisected && bisected.getHalf() == Bisected.Half.BOTTOM) {

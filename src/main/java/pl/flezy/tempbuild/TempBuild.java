@@ -5,19 +5,15 @@ import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.flags.registry.FlagConflictException;
 import com.sk89q.worldguard.protection.flags.registry.FlagRegistry;
-import eu.okaeri.configs.ConfigManager;
-import eu.okaeri.configs.serdes.commons.SerdesCommons;
-import eu.okaeri.configs.validator.okaeri.OkaeriValidator;
-import eu.okaeri.configs.yaml.bukkit.YamlBukkitConfigurer;
-import eu.okaeri.configs.yaml.bukkit.serdes.SerdesBukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import pl.flezy.tempbuild.command.TempBuildCommand;
 import pl.flezy.tempbuild.config.Config;
 import pl.flezy.tempbuild.listener.BuildListener;
 import pl.flezy.tempbuild.listener.FireListener;
 import pl.flezy.tempbuild.manager.BlockDecayManager;
+import pl.flezy.tempbuild.manager.ConfigurationManager;
 
-import java.io.File;
+import java.util.ArrayList;
 
 public final class TempBuild extends JavaPlugin {
 
@@ -45,7 +41,7 @@ public final class TempBuild extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        loadConfig();
+        config = ConfigurationManager.getConfig(this);
 
         getServer().getPluginManager().registerEvents(new BuildListener(), this);
         getServer().getPluginManager().registerEvents(new FireListener(), this);
@@ -56,23 +52,12 @@ public final class TempBuild extends JavaPlugin {
         BlockDecayManager.initialize();
     }
 
-    private void loadConfig() {
-        config = (Config) ConfigManager.create(Config.class)
-                .withConfigurer(new OkaeriValidator(new YamlBukkitConfigurer()))
-                .withSerdesPack(registry -> {
-                    registry.register(new SerdesCommons());
-                    registry.register(new SerdesBukkit());
-                })
-                .withBindFile(new File(this.getDataFolder(), "config.yml"))
-                .saveDefaults()
-                .load(true);
-    }
-
     public static TempBuild getInstance() {
         return instance;
     }
 
     public void reload() {
-        config.load();
+        this.config.blockedBlocks = new ArrayList<>();
+        this.config.load();
     }
 }
