@@ -118,11 +118,9 @@ public class BuildListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockFromTo(BlockFromToEvent event) {
-        if (!TempBuild.getInstance().config.allowLiquidFlow) {
-            event.setCancelled(true);
-        }
-
-        if (BlockDecayManager.placedBlocks.containsKey(event.getToBlock().getLocation())) {
+        Location toLocation = event.getToBlock().getLocation();
+        if (TempBuildManager.isRegion(toLocation) &&
+                !TempBuild.getInstance().config.allowLiquidFlow) {
             event.setCancelled(true);
         }
     }
