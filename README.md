@@ -17,6 +17,12 @@ Extension to **WorldGuard** to create temporary building zones. Blocks placed in
 ## Dependencies
 - [WorldGuard](https://dev.bukkit.org/projects/worldguard) - Region protection and custom flags
 
+## Build
+
+```bash
+mvn clean package
+```
+
 ## Configuration
 
 ### config.yml
