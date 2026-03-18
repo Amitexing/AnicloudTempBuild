@@ -12,9 +12,16 @@ Extension to **WorldGuard** to create temporary building zones. Blocks placed in
 - **Automatic Block Decay**: Blocks placed in temp-build zones disappear after configured time
 - **Visual Feedback**: Shows block damage progress as decay timer counts down
 - **Configurable Drop Behavior**: Choose whether decaying blocks drop items or vanish
+- **UltimateBlockRegen Compatibility**: Prevents temp blocks from being regenerated as bedrock and allows breaking UBR bedrock replacements
 
 ## Dependencies
 - [WorldGuard](https://dev.bukkit.org/projects/worldguard) - Region protection and custom flags
+
+## Build
+
+```bash
+mvn clean package
+```
 
 ## Configuration
 

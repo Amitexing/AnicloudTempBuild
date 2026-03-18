@@ -1,10 +1,11 @@
 name: TempBuild
-version: '${version}'
+version: '${project.version}'
 main: pl.flezy.tempbuild.TempBuild
 api-version: '1.19'
 authors: [flezy]
 website: flezy.pl
 depend: [WorldGuard]
+softdepend: [UltimateBlockRegen]
 commands:
     tempbuild:
         description: Main command for TempBuild plugin

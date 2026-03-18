@@ -6,6 +6,7 @@ import com.sk89q.worldguard.WorldGuard;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.flags.StateFlag;
 import com.sk89q.worldguard.protection.regions.RegionContainer;
+import org.bukkit.block.Block;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -44,8 +45,14 @@ public class TempBuildManager {
         return state == StateFlag.State.ALLOW;
     }
 
-    public static boolean canBreak(Player player, Location location) {
+    public static boolean canBreak(Player player, Block block) {
+        Location location = block.getLocation();
+
         if (BlockDecayManager.placedBlocks.containsKey(location)) {
+            return true;
+        }
+
+        if (TempBuild.getInstance().ultimateBlockRegenHook.canBreak(block)) {
             return true;
         }
 

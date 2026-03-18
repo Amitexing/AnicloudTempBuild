@@ -12,6 +12,7 @@ import pl.flezy.tempbuild.listener.BuildListener;
 import pl.flezy.tempbuild.listener.FireListener;
 import pl.flezy.tempbuild.manager.BlockDecayManager;
 import pl.flezy.tempbuild.manager.ConfigurationManager;
+import pl.flezy.tempbuild.manager.UltimateBlockRegenHook;
 
 import java.util.ArrayList;
 
@@ -20,6 +21,7 @@ public final class TempBuild extends JavaPlugin {
     private static TempBuild instance;
     public Config config;
     public StateFlag TEMP_BUILD_FLAG;
+    public UltimateBlockRegenHook ultimateBlockRegenHook;
 
     @Override
     public void onLoad() {
@@ -42,6 +44,11 @@ public final class TempBuild extends JavaPlugin {
     public void onEnable() {
         instance = this;
         config = ConfigurationManager.getConfig(this);
+        ultimateBlockRegenHook = new UltimateBlockRegenHook(getServer().getPluginManager());
+
+        if (ultimateBlockRegenHook.isHooked()) {
+            getLogger().info("Detected UltimateBlockRegen: compatibility mode enabled.");
+        }
 
         getServer().getPluginManager().registerEvents(new BuildListener(), this);
         getServer().getPluginManager().registerEvents(new FireListener(), this);

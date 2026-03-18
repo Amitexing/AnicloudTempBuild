@@ -30,4 +30,6 @@ public class Config extends OkaeriConfig {
     public List<Material> blockedBlocks = List.of(
             Material.LAVA
     );
+    @Comment("Allow breaking UltimateBlockRegen replacement blocks (bedrock) in temp-build regions")
+    public boolean allowBreakUltimateBlockRegenBlocks = true;
 }
