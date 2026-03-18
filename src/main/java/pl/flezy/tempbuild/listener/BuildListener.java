@@ -66,14 +66,14 @@ public class BuildListener implements Listener {
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
-        Location location = event.getBlock().getLocation();
+        Block block = event.getBlock();
+        Location location = block.getLocation();
         if (TempBuildManager.hasBypass(player, location)) return;
 
-        if (!TempBuildManager.canBreak(player, location)){
+        if (!TempBuildManager.canBreak(player, block)){
             event.setCancelled(true);
         }
         else if (BlockDecayManager.placedBlocks.containsKey(location)) {
-            Block block = event.getBlock();
             if (block.getBlockData() instanceof Bisected bisected) {
                 if (bisected.getHalf() == Bisected.Half.TOP) {
                     Location bottomLocation = location.clone().add(0, -1, 0);
@@ -81,6 +81,13 @@ public class BuildListener implements Listener {
                 }
             }
             BlockDecayManager.placedBlocks.remove(location);
+
+            Bukkit.getScheduler().runTask(TempBuild.getInstance(), () -> {
+                Block currentBlock = location.getBlock();
+                if (currentBlock.getType() == Material.BEDROCK && !BlockDecayManager.placedBlocks.containsKey(location)) {
+                    currentBlock.setType(Material.AIR);
+                }
+            });
         }
     }
 

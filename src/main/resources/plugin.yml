@@ -5,6 +5,7 @@ api-version: '1.19'
 authors: [flezy]
 website: flezy.pl
 depend: [WorldGuard]
+softdepend: [UltimateBlockRegen]
 commands:
     tempbuild:
         description: Main command for TempBuild plugin
