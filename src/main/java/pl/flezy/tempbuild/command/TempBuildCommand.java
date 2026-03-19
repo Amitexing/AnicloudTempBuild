@@ -15,7 +15,7 @@ public class TempBuildCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length >= 1 && args[0].equalsIgnoreCase("reload")) {
             TempBuild.getInstance().reload();
-            sender.sendMessage("TempBuild configuration reloaded.");
+            sender.sendMessage("AnicloudTempBuild configuration reloaded.");
         }
         return true;
     }

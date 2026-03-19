@@ -63,17 +63,22 @@ public class BuildListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         Location location = block.getLocation();
         if (TempBuildManager.hasBypass(player, location)) return;
 
+        if (TempBuildManager.isTempBuildBlock(location) && event.isCancelled()) {
+            event.setCancelled(false);
+            event.setDropItems(true);
+        }
+
         if (!TempBuildManager.canBreak(player, block)){
             event.setCancelled(true);
         }
-        else if (BlockDecayManager.placedBlocks.containsKey(location)) {
+        else if (TempBuildManager.isTempBuildBlock(location)) {
             if (block.getBlockData() instanceof Bisected bisected) {
                 if (bisected.getHalf() == Bisected.Half.TOP) {
                     Location bottomLocation = location.clone().add(0, -1, 0);
@@ -84,11 +89,24 @@ public class BuildListener implements Listener {
 
             Bukkit.getScheduler().runTask(TempBuild.getInstance(), () -> {
                 Block currentBlock = location.getBlock();
-                if (currentBlock.getType() == Material.BEDROCK && !BlockDecayManager.placedBlocks.containsKey(location)) {
+                if (currentBlock.getType() == Material.BEDROCK && !TempBuildManager.isTempBuildBlock(location)) {
                     currentBlock.setType(Material.AIR);
                 }
             });
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+    public void onBlockBreakFinal(BlockBreakEvent event) {
+        Location location = event.getBlock().getLocation();
+        if (!TempBuildManager.isTempBuildBlock(location)) {
+            return;
+        }
+
+        if (event.isCancelled()) {
+            event.setCancelled(false);
+        }
+        event.setDropItems(true);
     }
 
     @EventHandler
@@ -105,22 +123,58 @@ public class BuildListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
-        if (block != null && BlockDecayManager.placedBlocks.containsKey(block.getLocation())) {
+        if (block == null) {
+            return;
+        }
+
+        allowDoorInteractionAgainstUltimateBlockRegen(event, block);
+
+        if (TempBuildManager.isTempBuildBlock(block.getLocation())) {
             TempBuildManager.updateBlockData(block.getLocation());
 
             Location topLocation = block.getLocation().clone().add(0, 1, 0);
-            if (BlockDecayManager.placedBlocks.containsKey(topLocation)) {
+            if (TempBuildManager.isTempBuildBlock(topLocation)) {
                 TempBuildManager.updateBlockData(topLocation);
             }
 
             Location bottomLocation = block.getLocation().clone().add(0, -1, 0);
-            if (BlockDecayManager.placedBlocks.containsKey(bottomLocation)) {
+            if (TempBuildManager.isTempBuildBlock(bottomLocation)) {
                 TempBuildManager.updateBlockData(bottomLocation);
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+    public void onPlayerInteractFinal(PlayerInteractEvent event) {
+        Block block = event.getClickedBlock();
+        if (block == null) {
+            return;
+        }
+
+        allowDoorInteractionAgainstUltimateBlockRegen(event, block);
+    }
+
+    private void allowDoorInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block block) {
+        if (!TempBuild.getInstance().ultimateBlockRegenHook.isHooked()) {
+            return;
+        }
+
+        if (!TempBuildManager.isDoor(block.getType())) {
+            return;
+        }
+
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK &&
+                event.getAction() != Action.LEFT_CLICK_BLOCK &&
+                event.getAction() != Action.PHYSICAL) {
+            return;
+        }
+
+        event.setCancelled(false);
+        event.setUseInteractedBlock(org.bukkit.event.Event.Result.ALLOW);
+        event.setUseItemInHand(org.bukkit.event.Event.Result.ALLOW);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
