@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.Bisected;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -15,12 +16,14 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.scheduler.BukkitTask;
 import pl.flezy.tempbuild.TempBuild;
 import pl.flezy.tempbuild.config.Config;
 import pl.flezy.tempbuild.manager.BlockDecayManager;
 import pl.flezy.tempbuild.manager.TempBuildManager;
 
 public class BuildListener implements Listener {
+    private static final int ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS = 40;
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
@@ -83,16 +86,15 @@ public class BuildListener implements Listener {
                 if (bisected.getHalf() == Bisected.Half.TOP) {
                     Location bottomLocation = location.clone().add(0, -1, 0);
                     BlockDecayManager.placedBlocks.remove(bottomLocation);
+                    scheduleUltimateBlockRegenDelayBlockCleanup(bottomLocation);
+                } else if (bisected.getHalf() == Bisected.Half.BOTTOM) {
+                    Location topLocation = location.clone().add(0, 1, 0);
+                    BlockDecayManager.placedBlocks.remove(topLocation);
+                    scheduleUltimateBlockRegenDelayBlockCleanup(topLocation);
                 }
             }
             BlockDecayManager.placedBlocks.remove(location);
-
-            Bukkit.getScheduler().runTask(TempBuild.getInstance(), () -> {
-                Block currentBlock = location.getBlock();
-                if (currentBlock.getType() == Material.BEDROCK && !TempBuildManager.isTempBuildBlock(location)) {
-                    currentBlock.setType(Material.AIR);
-                }
-            });
+            scheduleUltimateBlockRegenDelayBlockCleanup(location);
         }
     }
 
@@ -130,7 +132,7 @@ public class BuildListener implements Listener {
             return;
         }
 
-        allowDoorInteractionAgainstUltimateBlockRegen(event, block);
+        allowInteractionAgainstUltimateBlockRegen(event, block);
 
         if (TempBuildManager.isTempBuildBlock(block.getLocation())) {
             TempBuildManager.updateBlockData(block.getLocation());
@@ -154,15 +156,15 @@ public class BuildListener implements Listener {
             return;
         }
 
-        allowDoorInteractionAgainstUltimateBlockRegen(event, block);
+        allowInteractionAgainstUltimateBlockRegen(event, block);
     }
 
-    private void allowDoorInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block block) {
+    private void allowInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block block) {
         if (!TempBuild.getInstance().ultimateBlockRegenHook.isHooked()) {
             return;
         }
 
-        if (!TempBuildManager.isDoor(block.getType())) {
+        if (!TempBuildManager.isInteractiveDoorLike(block.getType())) {
             return;
         }
 
@@ -172,9 +174,39 @@ public class BuildListener implements Listener {
             return;
         }
 
+        if (event.getHand() != null && event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+
         event.setCancelled(false);
         event.setUseInteractedBlock(org.bukkit.event.Event.Result.ALLOW);
-        event.setUseItemInHand(org.bukkit.event.Event.Result.ALLOW);
+    }
+
+    private void scheduleUltimateBlockRegenDelayBlockCleanup(Location location) {
+        if (!TempBuild.getInstance().ultimateBlockRegenHook.isHooked()) {
+            return;
+        }
+
+        BukkitTask[] taskRef = new BukkitTask[1];
+        taskRef[0] = Bukkit.getScheduler().runTaskTimer(TempBuild.getInstance(), () -> {
+            Block currentBlock = location.getBlock();
+            if (TempBuildManager.isTempBuildBlock(location)) {
+                taskRef[0].cancel();
+                return;
+            }
+
+            if (currentBlock.getType() == Material.BEDROCK) {
+                currentBlock.setType(Material.AIR);
+            } else {
+                taskRef[0].cancel();
+            }
+        }, 1L, 1L);
+
+        Bukkit.getScheduler().runTaskLater(TempBuild.getInstance(), () -> {
+            if (taskRef[0] != null) {
+                taskRef[0].cancel();
+            }
+        }, ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

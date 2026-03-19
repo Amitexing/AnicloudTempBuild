@@ -75,6 +75,15 @@ public class TempBuildManager {
         return Tag.DOORS.isTagged(material);
     }
 
+    public static boolean isInteractiveDoorLike(Material material) {
+        return Tag.DOORS.isTagged(material)
+                || Tag.TRAPDOORS.isTagged(material)
+                || Tag.FENCE_GATES.isTagged(material)
+                || Tag.BUTTONS.isTagged(material)
+                || Tag.PRESSURE_PLATES.isTagged(material)
+                || material == Material.LEVER;
+    }
+
     public static boolean isLiquid(Material material) {
         return List.of(
                 Material.WATER,
