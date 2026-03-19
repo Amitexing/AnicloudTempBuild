@@ -9,6 +9,7 @@ import com.sk89q.worldguard.protection.regions.RegionContainer;
 import org.bukkit.block.Block;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import pl.flezy.tempbuild.TempBuild;
@@ -48,7 +49,7 @@ public class TempBuildManager {
     public static boolean canBreak(Player player, Block block) {
         Location location = block.getLocation();
 
-        if (BlockDecayManager.placedBlocks.containsKey(location)) {
+        if (isTempBuildBlock(location)) {
             return true;
         }
 
@@ -61,9 +62,17 @@ public class TempBuildManager {
 
 
     public static void updateBlockData(Location location) {
-        if (BlockDecayManager.placedBlocks.containsKey(location)) {
+        if (isTempBuildBlock(location)) {
             BlockDecayManager.placedBlocks.put(location, location.getBlock().getBlockData());
         }
+    }
+
+    public static boolean isTempBuildBlock(Location location) {
+        return BlockDecayManager.placedBlocks.containsKey(location);
+    }
+
+    public static boolean isDoor(Material material) {
+        return Tag.DOORS.isTagged(material);
     }
 
     public static boolean isLiquid(Material material) {

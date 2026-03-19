@@ -1,4 +1,4 @@
-name: TempBuild
+name: AnicloudTempBuild
 version: '${project.version}'
 main: pl.flezy.tempbuild.TempBuild
 api-version: '1.19'
@@ -8,7 +8,7 @@ depend: [WorldGuard]
 softdepend: [UltimateBlockRegen]
 commands:
     tempbuild:
-        description: Main command for TempBuild plugin
+        description: Main command for AnicloudTempBuild plugin
         aliases: [tb]
         permission: tempbuild.command
 permissions:
