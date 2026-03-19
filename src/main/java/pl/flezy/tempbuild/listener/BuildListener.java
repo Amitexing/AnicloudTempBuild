@@ -72,6 +72,7 @@ public class BuildListener implements Listener {
 
         if (TempBuildManager.isTempBuildBlock(location) && event.isCancelled()) {
             event.setCancelled(false);
+            event.setDropItems(true);
         }
 
         if (!TempBuildManager.canBreak(player, block)){
@@ -95,6 +96,19 @@ public class BuildListener implements Listener {
         }
     }
 
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+    public void onBlockBreakFinal(BlockBreakEvent event) {
+        Location location = event.getBlock().getLocation();
+        if (!TempBuildManager.isTempBuildBlock(location)) {
+            return;
+        }
+
+        if (event.isCancelled()) {
+            event.setCancelled(false);
+        }
+        event.setDropItems(true);
+    }
+
     @EventHandler
     public void onBlockExplodeEvent(BlockExplodeEvent event) {
         if (TempBuild.getInstance().config.protectFromExplosions) {
@@ -116,12 +130,7 @@ public class BuildListener implements Listener {
             return;
         }
 
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK &&
-                TempBuild.getInstance().ultimateBlockRegenHook.isHooked() &&
-                TempBuildManager.isDoor(block.getType())) {
-            event.setCancelled(false);
-            event.setUseInteractedBlock(org.bukkit.event.Event.Result.ALLOW);
-        }
+        allowDoorInteractionAgainstUltimateBlockRegen(event, block);
 
         if (TempBuildManager.isTempBuildBlock(block.getLocation())) {
             TempBuildManager.updateBlockData(block.getLocation());
@@ -136,6 +145,36 @@ public class BuildListener implements Listener {
                 TempBuildManager.updateBlockData(bottomLocation);
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
+    public void onPlayerInteractFinal(PlayerInteractEvent event) {
+        Block block = event.getClickedBlock();
+        if (block == null) {
+            return;
+        }
+
+        allowDoorInteractionAgainstUltimateBlockRegen(event, block);
+    }
+
+    private void allowDoorInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block block) {
+        if (!TempBuild.getInstance().ultimateBlockRegenHook.isHooked()) {
+            return;
+        }
+
+        if (!TempBuildManager.isDoor(block.getType())) {
+            return;
+        }
+
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK &&
+                event.getAction() != Action.LEFT_CLICK_BLOCK &&
+                event.getAction() != Action.PHYSICAL) {
+            return;
+        }
+
+        event.setCancelled(false);
+        event.setUseInteractedBlock(org.bukkit.event.Event.Result.ALLOW);
+        event.setUseItemInHand(org.bukkit.event.Event.Result.ALLOW);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
