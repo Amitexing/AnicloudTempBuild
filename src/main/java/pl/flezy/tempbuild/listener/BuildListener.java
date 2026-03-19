@@ -130,7 +130,7 @@ public class BuildListener implements Listener {
             return;
         }
 
-        allowDoorInteractionAgainstUltimateBlockRegen(event, block);
+        allowInteractionAgainstUltimateBlockRegen(event, block);
 
         if (TempBuildManager.isTempBuildBlock(block.getLocation())) {
             TempBuildManager.updateBlockData(block.getLocation());
@@ -154,15 +154,15 @@ public class BuildListener implements Listener {
             return;
         }
 
-        allowDoorInteractionAgainstUltimateBlockRegen(event, block);
+        allowInteractionAgainstUltimateBlockRegen(event, block);
     }
 
-    private void allowDoorInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block block) {
+    private void allowInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block block) {
         if (!TempBuild.getInstance().ultimateBlockRegenHook.isHooked()) {
             return;
         }
 
-        if (!TempBuildManager.isDoor(block.getType())) {
+        if (!TempBuildManager.isInteractiveDoorLike(block.getType())) {
             return;
         }
 
