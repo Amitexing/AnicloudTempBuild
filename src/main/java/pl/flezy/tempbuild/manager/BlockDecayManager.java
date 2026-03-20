@@ -72,7 +72,7 @@ public class BlockDecayManager {
         Block block = location.getBlock();
         BlockData blockData = block.getBlockData();
 
-        int decayTicks = TempBuild.getInstance().config.blockDecayTime * 20;
+        int decayTicks = TempBuild.getInstance().config.getDecayTimeSeconds(block.getType()) * 20;
         long decayTimeMs = decayTicks * 50L;
 
         placedBlocks.put(location, blockData);
@@ -106,6 +106,7 @@ public class BlockDecayManager {
     }
 
     private static void removeBlock(Location location, Block block) {
+        BlockData data = placedBlocks.get(location);
         clearBlock(location);
 
         if (TempBuild.getInstance().config.dropBlocks) {
@@ -114,7 +115,6 @@ public class BlockDecayManager {
 
         block.setType(Material.AIR);
 
-        BlockData data = placedBlocks.get(location);
         if (data instanceof Bisected bisected && bisected.getHalf() == Bisected.Half.BOTTOM) {
             Location topLocation = location.clone().add(0, 1, 0);
             clearBlock(topLocation);
