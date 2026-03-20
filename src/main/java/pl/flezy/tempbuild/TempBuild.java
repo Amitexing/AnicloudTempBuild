@@ -44,6 +44,8 @@ public final class TempBuild extends JavaPlugin {
     public void onEnable() {
         instance = this;
         config = ConfigurationManager.getConfig(this);
+        config.ensureBlockDecayTimesFilled();
+        config.save();
         ultimateBlockRegenHook = new UltimateBlockRegenHook(getServer().getPluginManager());
 
         if (ultimateBlockRegenHook.isHooked()) {
@@ -66,5 +68,7 @@ public final class TempBuild extends JavaPlugin {
     public void reload() {
         this.config.blockedBlocks = new ArrayList<>();
         this.config.load();
+        this.config.ensureBlockDecayTimesFilled();
+        this.config.save();
     }
 }
