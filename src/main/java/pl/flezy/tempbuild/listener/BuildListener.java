@@ -3,6 +3,7 @@ package pl.flezy.tempbuild.listener;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.Bisected;
@@ -170,6 +171,16 @@ public class BuildListener implements Listener {
         }
 
         if (event.getHand() != null && event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+
+        if (event.getPlayer() != null &&
+                Tag.TRAPDOORS.isTagged(block.getType()) &&
+                TempBuild.getInstance().regionFlagManager.isLocked(
+                        event.getPlayer(),
+                        block.getLocation(),
+                        TempBuild.getInstance().TRAPDOOR_LOCK_FLAG
+                )) {
             return;
         }
 

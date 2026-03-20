@@ -13,10 +13,8 @@ import pl.flezy.tempbuild.listener.BuildListener;
 import pl.flezy.tempbuild.listener.FireListener;
 import pl.flezy.tempbuild.listener.RegionInteractionBlockListener;
 import pl.flezy.tempbuild.listener.RegionInteractionEntityListener;
-import pl.flezy.tempbuild.listener.DecoratedPotListener;
 import pl.flezy.tempbuild.manager.BlockDecayManager;
 import pl.flezy.tempbuild.manager.ConfigurationManager;
-import pl.flezy.tempbuild.manager.PotLootManager;
 import pl.flezy.tempbuild.manager.RegionFlagManager;
 import pl.flezy.tempbuild.manager.TempBlockStorage;
 import pl.flezy.tempbuild.manager.UltimateBlockRegenHook;
@@ -30,9 +28,9 @@ public final class TempBuild extends JavaPlugin {
     public StateFlag TEMP_BUILD_FLAG;
     public StateFlag OC_INTERACTION_LOCK_FLAG;
     public StateFlag CAMPFIRE_INTERACTION_LOCK_FLAG;
+    public StateFlag TRAPDOOR_LOCK_FLAG;
     public UltimateBlockRegenHook ultimateBlockRegenHook;
     public TempBlockStorage tempBlockStorage;
-    public PotLootManager potLootManager;
     public RegionFlagManager regionFlagManager;
 
     @Override
@@ -41,6 +39,7 @@ public final class TempBuild extends JavaPlugin {
         TEMP_BUILD_FLAG = registerStateFlag(registry, "temp-build");
         OC_INTERACTION_LOCK_FLAG = registerStateFlag(registry, "oc-interaction-lock");
         CAMPFIRE_INTERACTION_LOCK_FLAG = registerStateFlag(registry, "campfire-interaction-lock");
+        TRAPDOOR_LOCK_FLAG = registerStateFlag(registry, "trapdoor-lock");
     }
 
     private StateFlag registerStateFlag(FlagRegistry registry, String name) {
@@ -74,8 +73,6 @@ public final class TempBuild extends JavaPlugin {
         config.save();
         tempBlockStorage = new TempBlockStorage(this);
         tempBlockStorage.initialize();
-        potLootManager = new PotLootManager(this);
-        potLootManager.load();
         regionFlagManager = new RegionFlagManager();
         ultimateBlockRegenHook = new UltimateBlockRegenHook(getServer().getPluginManager());
 
@@ -83,7 +80,6 @@ public final class TempBuild extends JavaPlugin {
             getLogger().info("Detected UltimateBlockRegen: compatibility mode enabled.");
         }
 
-        getServer().getPluginManager().registerEvents(new DecoratedPotListener(), this);
         getServer().getPluginManager().registerEvents(new RegionInteractionBlockListener(), this);
         getServer().getPluginManager().registerEvents(new RegionInteractionEntityListener(), this);
         getServer().getPluginManager().registerEvents(new BuildListener(), this);
@@ -112,6 +108,5 @@ public final class TempBuild extends JavaPlugin {
         this.config.load();
         this.config.ensureBlockDecayTimesFilled();
         this.config.save();
-        this.potLootManager.load();
     }
 }
