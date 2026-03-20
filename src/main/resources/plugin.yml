@@ -1,7 +1,7 @@
 name: AnicloudTempBuild
 version: '${project.version}'
 main: pl.flezy.tempbuild.TempBuild
-api-version: '1.19'
+api-version: '1.21'
 authors: [flezy]
 website: flezy.pl
 depend: [WorldGuard]
