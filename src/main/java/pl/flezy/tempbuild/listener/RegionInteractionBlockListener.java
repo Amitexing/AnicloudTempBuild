@@ -39,7 +39,6 @@ public class RegionInteractionBlockListener implements Listener {
         }
 
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK &&
-                event.getAction() != Action.LEFT_CLICK_BLOCK &&
                 event.getAction() != Action.PHYSICAL) {
             return;
         }
