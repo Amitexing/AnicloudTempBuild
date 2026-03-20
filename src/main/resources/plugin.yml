@@ -17,3 +17,6 @@ permissions:
     description: Allows to use tempbuild commands
     children:
       tempbuild.command.reload: true
+  anicloud.tempbuildbypass:
+    default: op
+    description: Allows placing blocks outside temp-build flagged regions
