@@ -72,7 +72,7 @@ public class BlockDecayManager {
         Block block = location.getBlock();
         BlockData blockData = block.getBlockData();
 
-        int decayTicks = TempBuild.getInstance().config.blockDecayTime * 20;
+        int decayTicks = TempBuild.getInstance().config.getDecayTimeSeconds(block.getType()) * 20;
         long decayTimeMs = decayTicks * 50L;
 
         placedBlocks.put(location, blockData);

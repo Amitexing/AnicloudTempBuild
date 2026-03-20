@@ -142,6 +142,10 @@ public class BuildListener implements Listener {
             return;
         }
 
+        if (TempBuildManager.isDoor(block.getType())) {
+            return;
+        }
+
         allowInteractionAgainstUltimateBlockRegen(event, block);
     }
 
