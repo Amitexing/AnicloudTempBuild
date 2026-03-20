@@ -4,11 +4,15 @@ import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
 import org.bukkit.Material;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 public class Config extends OkaeriConfig {
-    @Comment("Time in seconds before placed blocks decay and disappear")
+    @Comment("Time in minutes before placed blocks decay and disappear")
     public int blockDecayTime = 30;
+    @Comment("Per-block decay time in minutes for placed temp-build blocks (all block materials are auto-populated)")
+    public Map<Material, Integer> blockDecayTimes = new EnumMap<>(Material.class);
     @Comment("Whether decaying blocks should drop items when they disappear")
     public boolean dropBlocks = true;
     @Comment("Whether blocks in the region should be protected from explosions")
@@ -32,4 +36,18 @@ public class Config extends OkaeriConfig {
     );
     @Comment("Allow breaking UltimateBlockRegen replacement blocks (bedrock) in temp-build regions")
     public boolean allowBreakUltimateBlockRegenBlocks = true;
+
+    public void ensureBlockDecayTimesFilled() {
+        for (Material material : Material.values()) {
+            if (!material.isBlock()) {
+                continue;
+            }
+
+            blockDecayTimes.putIfAbsent(material, blockDecayTime);
+        }
+    }
+
+    public int getDecayTimeMinutes(Material material) {
+        return blockDecayTimes.getOrDefault(material, blockDecayTime);
+    }
 }
