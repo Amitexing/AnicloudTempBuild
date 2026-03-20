@@ -179,8 +179,8 @@ public class BuildListener implements Listener {
                     : location.clone();
             Location topLocation = bottomLocation.clone().add(0, 1, 0);
 
-            BlockDecayManager.placedBlocks.remove(bottomLocation);
-            BlockDecayManager.placedBlocks.remove(topLocation);
+            BlockDecayManager.untrackBlock(bottomLocation);
+            BlockDecayManager.untrackBlock(topLocation);
 
             clearBlockForTempBuildBreak(player, bottomLocation.getBlock());
             topLocation.getBlock().setType(Material.AIR, false);
@@ -190,7 +190,7 @@ public class BuildListener implements Listener {
             return;
         }
 
-        BlockDecayManager.placedBlocks.remove(location);
+        BlockDecayManager.untrackBlock(location);
         clearBlockForTempBuildBreak(player, block);
         scheduleUltimateBlockRegenDelayBlockCleanup(location);
     }

@@ -9,9 +9,9 @@ import java.util.List;
 import java.util.Map;
 
 public class Config extends OkaeriConfig {
-    @Comment("Time in seconds before placed blocks decay and disappear")
+    @Comment("Time in minutes before placed blocks decay and disappear")
     public int blockDecayTime = 30;
-    @Comment("Per-block decay time in seconds for placed temp-build blocks (all block materials are auto-populated)")
+    @Comment("Per-block decay time in minutes for placed temp-build blocks (all block materials are auto-populated)")
     public Map<Material, Integer> blockDecayTimes = new EnumMap<>(Material.class);
     @Comment("Whether decaying blocks should drop items when they disappear")
     public boolean dropBlocks = true;
@@ -47,7 +47,7 @@ public class Config extends OkaeriConfig {
         }
     }
 
-    public int getDecayTimeSeconds(Material material) {
+    public int getDecayTimeMinutes(Material material) {
         return blockDecayTimes.getOrDefault(material, blockDecayTime);
     }
 }
