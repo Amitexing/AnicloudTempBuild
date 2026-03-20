@@ -114,7 +114,7 @@ public class BuildListener implements Listener {
             return;
         }
 
-        if (handleDoorInteractionAgainstUltimateBlockRegen(event, block)) {
+        if (handleDoorInteraction(event, block)) {
             return;
         }
 
@@ -233,11 +233,7 @@ public class BuildListener implements Listener {
         }, 1L, 1L);
     }
 
-    private boolean handleDoorInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block clickedBlock) {
-        if (!TempBuild.getInstance().ultimateBlockRegenHook.isHooked()) {
-            return false;
-        }
-
+    private boolean handleDoorInteraction(PlayerInteractEvent event, Block clickedBlock) {
         if (!TempBuildManager.isDoor(clickedBlock.getType())) {
             return false;
         }
@@ -269,12 +265,8 @@ public class BuildListener implements Listener {
         bottom.setBlockData(bottomDoor, false);
         top.setBlockData(topDoor, false);
 
-        if (TempBuildManager.isTempBuildBlock(bottomLocation)) {
-            TempBuildManager.updateBlockData(bottomLocation);
-        }
-        if (TempBuildManager.isTempBuildBlock(topLocation)) {
-            TempBuildManager.updateBlockData(topLocation);
-        }
+        TempBuildManager.updateBlockData(bottomLocation);
+        TempBuildManager.updateBlockData(topLocation);
 
         event.setCancelled(true);
         event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
