@@ -57,7 +57,7 @@ public class TempBuildManager {
             return true;
         }
 
-        return isDenied(player, location);
+        return true;
     }
 
 

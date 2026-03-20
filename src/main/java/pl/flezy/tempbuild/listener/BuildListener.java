@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.data.Bisected;
+import org.bukkit.block.data.type.Door;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -24,6 +25,7 @@ import pl.flezy.tempbuild.manager.TempBuildManager;
 
 public class BuildListener implements Listener {
     private static final int ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS = 40;
+    private static final int DOOR_SYNC_TICKS = 6;
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
@@ -133,6 +135,7 @@ public class BuildListener implements Listener {
         }
 
         allowInteractionAgainstUltimateBlockRegen(event, block);
+        scheduleDoorStateSync(block);
 
         if (TempBuildManager.isTempBuildBlock(block.getLocation())) {
             TempBuildManager.updateBlockData(block.getLocation());
@@ -157,6 +160,7 @@ public class BuildListener implements Listener {
         }
 
         allowInteractionAgainstUltimateBlockRegen(event, block);
+        scheduleDoorStateSync(block);
     }
 
     private void allowInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block block) {
@@ -207,6 +211,46 @@ public class BuildListener implements Listener {
                 taskRef[0].cancel();
             }
         }, ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS);
+    }
+
+    private void scheduleDoorStateSync(Block clickedBlock) {
+        if (!TempBuildManager.isDoor(clickedBlock.getType())) {
+            return;
+        }
+
+        Location clickedLocation = clickedBlock.getLocation();
+        if (!TempBuildManager.isTempBuildBlock(clickedLocation)) {
+            return;
+        }
+
+        Location bottomLocation = clickedLocation;
+        if (clickedBlock.getBlockData() instanceof Bisected bisected && bisected.getHalf() == Bisected.Half.TOP) {
+            bottomLocation = clickedLocation.clone().add(0, -1, 0);
+        }
+
+        Location finalBottomLocation = bottomLocation;
+        for (long tick = 1; tick <= DOOR_SYNC_TICKS; tick++) {
+            Bukkit.getScheduler().runTaskLater(TempBuild.getInstance(), () -> syncDoorHalves(finalBottomLocation), tick);
+        }
+    }
+
+    private void syncDoorHalves(Location bottomLocation) {
+        Block bottom = bottomLocation.getBlock();
+        Block top = bottomLocation.clone().add(0, 1, 0).getBlock();
+
+        if (!(bottom.getBlockData() instanceof Door bottomDoor) || !(top.getBlockData() instanceof Door topDoor)) {
+            return;
+        }
+
+        boolean open = bottomDoor.isOpen() || topDoor.isOpen();
+        bottomDoor.setOpen(open);
+        topDoor.setOpen(open);
+
+        bottom.setBlockData(bottomDoor, false);
+        top.setBlockData(topDoor, false);
+
+        TempBuildManager.updateBlockData(bottomLocation);
+        TempBuildManager.updateBlockData(bottomLocation.clone().add(0, 1, 0));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
