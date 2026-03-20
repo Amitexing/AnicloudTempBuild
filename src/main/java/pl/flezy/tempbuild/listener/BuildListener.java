@@ -174,17 +174,20 @@ public class BuildListener implements Listener {
 
     private void breakTempBuildBlock(Player player, Block block, Location location) {
         if (block.getBlockData() instanceof Bisected bisected) {
-            if (bisected.getHalf() == Bisected.Half.TOP) {
-                Location bottomLocation = location.clone().add(0, -1, 0);
-                BlockDecayManager.placedBlocks.remove(bottomLocation);
-                clearBlockForTempBuildBreak(player, bottomLocation.getBlock());
-                scheduleUltimateBlockRegenDelayBlockCleanup(bottomLocation);
-            } else if (bisected.getHalf() == Bisected.Half.BOTTOM) {
-                Location topLocation = location.clone().add(0, 1, 0);
-                BlockDecayManager.placedBlocks.remove(topLocation);
-                clearBlockForTempBuildBreak(player, topLocation.getBlock());
-                scheduleUltimateBlockRegenDelayBlockCleanup(topLocation);
-            }
+            Location bottomLocation = bisected.getHalf() == Bisected.Half.TOP
+                    ? location.clone().add(0, -1, 0)
+                    : location.clone();
+            Location topLocation = bottomLocation.clone().add(0, 1, 0);
+
+            BlockDecayManager.placedBlocks.remove(bottomLocation);
+            BlockDecayManager.placedBlocks.remove(topLocation);
+
+            clearBlockForTempBuildBreak(player, bottomLocation.getBlock());
+            topLocation.getBlock().setType(Material.AIR, false);
+
+            scheduleUltimateBlockRegenDelayBlockCleanup(bottomLocation);
+            scheduleUltimateBlockRegenDelayBlockCleanup(topLocation);
+            return;
         }
 
         BlockDecayManager.placedBlocks.remove(location);

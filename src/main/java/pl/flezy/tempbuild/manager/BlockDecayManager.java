@@ -34,7 +34,12 @@ public class BlockDecayManager {
                     Location location = entry.getKey();
                     long placeTime = entry.getValue();
                     long elapsed = currentTime - placeTime;
-                    long decayTimeMs = blockDecayDuration.get(location);
+                    Long decayTimeMs = blockDecayDuration.get(location);
+                    if (decayTimeMs == null) {
+                        clearBlock(location);
+                        iterator.remove();
+                        continue;
+                    }
 
                     // Check if block still exists and matches expected type
                     Block block = location.getBlock();
@@ -102,6 +107,7 @@ public class BlockDecayManager {
             }
         }
         placedBlocks.remove(location);
+        blockPlaceTime.remove(location);
         blockDecayDuration.remove(location);
     }
 
