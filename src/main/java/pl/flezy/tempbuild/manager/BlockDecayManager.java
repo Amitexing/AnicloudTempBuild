@@ -34,7 +34,12 @@ public class BlockDecayManager {
                     Location location = entry.getKey();
                     long placeTime = entry.getValue();
                     long elapsed = currentTime - placeTime;
-                    long decayTimeMs = blockDecayDuration.get(location);
+                    Long decayTimeMs = blockDecayDuration.get(location);
+                    if (decayTimeMs == null) {
+                        clearBlock(location);
+                        iterator.remove();
+                        continue;
+                    }
 
                     // Check if block still exists and matches expected type
                     Block block = location.getBlock();
@@ -72,7 +77,7 @@ public class BlockDecayManager {
         Block block = location.getBlock();
         BlockData blockData = block.getBlockData();
 
-        int decayTicks = TempBuild.getInstance().config.blockDecayTime * 20;
+        int decayTicks = TempBuild.getInstance().config.getDecayTimeSeconds(block.getType()) * 20;
         long decayTimeMs = decayTicks * 50L;
 
         placedBlocks.put(location, blockData);
@@ -102,10 +107,12 @@ public class BlockDecayManager {
             }
         }
         placedBlocks.remove(location);
+        blockPlaceTime.remove(location);
         blockDecayDuration.remove(location);
     }
 
     private static void removeBlock(Location location, Block block) {
+        BlockData data = placedBlocks.get(location);
         clearBlock(location);
 
         if (TempBuild.getInstance().config.dropBlocks) {
@@ -114,7 +121,6 @@ public class BlockDecayManager {
 
         block.setType(Material.AIR);
 
-        BlockData data = placedBlocks.get(location);
         if (data instanceof Bisected bisected && bisected.getHalf() == Bisected.Half.BOTTOM) {
             Location topLocation = location.clone().add(0, 1, 0);
             clearBlock(topLocation);
