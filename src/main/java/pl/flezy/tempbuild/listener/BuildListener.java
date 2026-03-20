@@ -24,8 +24,7 @@ import pl.flezy.tempbuild.manager.BlockDecayManager;
 import pl.flezy.tempbuild.manager.TempBuildManager;
 
 public class BuildListener implements Listener {
-    private static final int ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS = 40;
-    private static final int DOOR_SYNC_TICKS = 6;
+    private static final int ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS = 60;
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
@@ -68,49 +67,30 @@ public class BuildListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onBlockBreak(BlockBreakEvent event) {
         Player player = event.getPlayer();
         Block block = event.getBlock();
         Location location = block.getLocation();
         if (TempBuildManager.hasBypass(player, location)) return;
 
-        if (TempBuildManager.isTempBuildBlock(location) && event.isCancelled()) {
-            event.setCancelled(false);
-            event.setDropItems(true);
+        if (TempBuildManager.isTempBuildBlock(location)) {
+            event.setCancelled(true);
+            breakTempBuildBlock(player, block, location);
+            return;
         }
 
         if (!TempBuildManager.canBreak(player, block)){
             event.setCancelled(true);
-        }
-        else if (TempBuildManager.isTempBuildBlock(location)) {
-            if (block.getBlockData() instanceof Bisected bisected) {
-                if (bisected.getHalf() == Bisected.Half.TOP) {
-                    Location bottomLocation = location.clone().add(0, -1, 0);
-                    BlockDecayManager.placedBlocks.remove(bottomLocation);
-                    scheduleUltimateBlockRegenDelayBlockCleanup(bottomLocation);
-                } else if (bisected.getHalf() == Bisected.Half.BOTTOM) {
-                    Location topLocation = location.clone().add(0, 1, 0);
-                    BlockDecayManager.placedBlocks.remove(topLocation);
-                    scheduleUltimateBlockRegenDelayBlockCleanup(topLocation);
-                }
-            }
-            BlockDecayManager.placedBlocks.remove(location);
-            scheduleUltimateBlockRegenDelayBlockCleanup(location);
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = false)
     public void onBlockBreakFinal(BlockBreakEvent event) {
         Location location = event.getBlock().getLocation();
-        if (!TempBuildManager.isTempBuildBlock(location)) {
-            return;
+        if (TempBuildManager.isTempBuildBlock(location)) {
+            event.setCancelled(true);
         }
-
-        if (event.isCancelled()) {
-            event.setCancelled(false);
-        }
-        event.setDropItems(true);
     }
 
     @EventHandler
@@ -127,15 +107,18 @@ public class BuildListener implements Listener {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerInteract(PlayerInteractEvent event) {
         Block block = event.getClickedBlock();
         if (block == null) {
             return;
         }
 
+        if (handleTempDoorInteraction(event, block)) {
+            return;
+        }
+
         allowInteractionAgainstUltimateBlockRegen(event, block);
-        scheduleDoorStateSync(block);
 
         if (TempBuildManager.isTempBuildBlock(block.getLocation())) {
             TempBuildManager.updateBlockData(block.getLocation());
@@ -160,7 +143,6 @@ public class BuildListener implements Listener {
         }
 
         allowInteractionAgainstUltimateBlockRegen(event, block);
-        scheduleDoorStateSync(block);
     }
 
     private void allowInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block block) {
@@ -186,71 +168,110 @@ public class BuildListener implements Listener {
         event.setUseInteractedBlock(org.bukkit.event.Event.Result.ALLOW);
     }
 
+    private void breakTempBuildBlock(Player player, Block block, Location location) {
+        if (block.getBlockData() instanceof Bisected bisected) {
+            if (bisected.getHalf() == Bisected.Half.TOP) {
+                Location bottomLocation = location.clone().add(0, -1, 0);
+                BlockDecayManager.placedBlocks.remove(bottomLocation);
+                clearBlockForTempBuildBreak(player, bottomLocation.getBlock());
+                scheduleUltimateBlockRegenDelayBlockCleanup(bottomLocation);
+            } else if (bisected.getHalf() == Bisected.Half.BOTTOM) {
+                Location topLocation = location.clone().add(0, 1, 0);
+                BlockDecayManager.placedBlocks.remove(topLocation);
+                clearBlockForTempBuildBreak(player, topLocation.getBlock());
+                scheduleUltimateBlockRegenDelayBlockCleanup(topLocation);
+            }
+        }
+
+        BlockDecayManager.placedBlocks.remove(location);
+        clearBlockForTempBuildBreak(player, block);
+        scheduleUltimateBlockRegenDelayBlockCleanup(location);
+    }
+
+    private void clearBlockForTempBuildBreak(Player player, Block targetBlock) {
+        if (targetBlock.getType().isAir()) {
+            return;
+        }
+
+        if (!player.getGameMode().name().equals("CREATIVE")) {
+            targetBlock.breakNaturally(player.getInventory().getItemInMainHand());
+        }
+
+        if (!targetBlock.getType().isAir()) {
+            targetBlock.setType(Material.AIR, false);
+        }
+    }
+
     private void scheduleUltimateBlockRegenDelayBlockCleanup(Location location) {
         if (!TempBuild.getInstance().ultimateBlockRegenHook.isHooked()) {
             return;
         }
 
-        BukkitTask[] taskRef = new BukkitTask[1];
-        taskRef[0] = Bukkit.getScheduler().runTaskTimer(TempBuild.getInstance(), () -> {
+        final int[] livedTicks = {0};
+        Bukkit.getScheduler().runTaskTimer(TempBuild.getInstance(), task -> {
+            livedTicks[0]++;
+            if (livedTicks[0] > ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS) {
+                task.cancel();
+                return;
+            }
+
             Block currentBlock = location.getBlock();
             if (TempBuildManager.isTempBuildBlock(location)) {
-                taskRef[0].cancel();
+                task.cancel();
                 return;
             }
 
             if (currentBlock.getType() == Material.BEDROCK) {
-                currentBlock.setType(Material.AIR);
+                currentBlock.setType(Material.AIR, false);
             } else {
-                taskRef[0].cancel();
+                task.cancel();
             }
         }, 1L, 1L);
-
-        Bukkit.getScheduler().runTaskLater(TempBuild.getInstance(), () -> {
-            if (taskRef[0] != null) {
-                taskRef[0].cancel();
-            }
-        }, ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS);
     }
 
-    private void scheduleDoorStateSync(Block clickedBlock) {
+    private boolean handleTempDoorInteraction(PlayerInteractEvent event, Block clickedBlock) {
         if (!TempBuildManager.isDoor(clickedBlock.getType())) {
-            return;
+            return false;
+        }
+
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return false;
+        }
+
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return true;
         }
 
         Location clickedLocation = clickedBlock.getLocation();
-        if (!TempBuildManager.isTempBuildBlock(clickedLocation)) {
-            return;
-        }
-
         Location bottomLocation = clickedLocation;
         if (clickedBlock.getBlockData() instanceof Bisected bisected && bisected.getHalf() == Bisected.Half.TOP) {
             bottomLocation = clickedLocation.clone().add(0, -1, 0);
         }
 
-        Location finalBottomLocation = bottomLocation;
-        for (long tick = 1; tick <= DOOR_SYNC_TICKS; tick++) {
-            Bukkit.getScheduler().runTaskLater(TempBuild.getInstance(), () -> syncDoorHalves(finalBottomLocation), tick);
+        Location topLocation = bottomLocation.clone().add(0, 1, 0);
+        if (!TempBuildManager.isTempBuildBlock(bottomLocation) && !TempBuildManager.isTempBuildBlock(topLocation)) {
+            return false;
         }
-    }
 
-    private void syncDoorHalves(Location bottomLocation) {
         Block bottom = bottomLocation.getBlock();
-        Block top = bottomLocation.clone().add(0, 1, 0).getBlock();
-
+        Block top = topLocation.getBlock();
         if (!(bottom.getBlockData() instanceof Door bottomDoor) || !(top.getBlockData() instanceof Door topDoor)) {
-            return;
+            return false;
         }
 
-        boolean open = bottomDoor.isOpen() || topDoor.isOpen();
-        bottomDoor.setOpen(open);
-        topDoor.setOpen(open);
-
+        boolean newOpenState = !bottomDoor.isOpen();
+        bottomDoor.setOpen(newOpenState);
+        topDoor.setOpen(newOpenState);
         bottom.setBlockData(bottomDoor, false);
         top.setBlockData(topDoor, false);
 
         TempBuildManager.updateBlockData(bottomLocation);
-        TempBuildManager.updateBlockData(bottomLocation.clone().add(0, 1, 0));
+        TempBuildManager.updateBlockData(topLocation);
+
+        event.setCancelled(true);
+        event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+        event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+        return true;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
