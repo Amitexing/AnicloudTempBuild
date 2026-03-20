@@ -114,7 +114,7 @@ public class BuildListener implements Listener {
             return;
         }
 
-        if (handleTempDoorInteraction(event, block)) {
+        if (handleDoorInteractionAgainstUltimateBlockRegen(event, block)) {
             return;
         }
 
@@ -229,7 +229,11 @@ public class BuildListener implements Listener {
         }, 1L, 1L);
     }
 
-    private boolean handleTempDoorInteraction(PlayerInteractEvent event, Block clickedBlock) {
+    private boolean handleDoorInteractionAgainstUltimateBlockRegen(PlayerInteractEvent event, Block clickedBlock) {
+        if (!TempBuild.getInstance().ultimateBlockRegenHook.isHooked()) {
+            return false;
+        }
+
         if (!TempBuildManager.isDoor(clickedBlock.getType())) {
             return false;
         }
@@ -249,10 +253,6 @@ public class BuildListener implements Listener {
         }
 
         Location topLocation = bottomLocation.clone().add(0, 1, 0);
-        if (!TempBuildManager.isTempBuildBlock(bottomLocation) && !TempBuildManager.isTempBuildBlock(topLocation)) {
-            return false;
-        }
-
         Block bottom = bottomLocation.getBlock();
         Block top = topLocation.getBlock();
         if (!(bottom.getBlockData() instanceof Door bottomDoor) || !(top.getBlockData() instanceof Door topDoor)) {
@@ -265,8 +265,12 @@ public class BuildListener implements Listener {
         bottom.setBlockData(bottomDoor, false);
         top.setBlockData(topDoor, false);
 
-        TempBuildManager.updateBlockData(bottomLocation);
-        TempBuildManager.updateBlockData(topLocation);
+        if (TempBuildManager.isTempBuildBlock(bottomLocation)) {
+            TempBuildManager.updateBlockData(bottomLocation);
+        }
+        if (TempBuildManager.isTempBuildBlock(topLocation)) {
+            TempBuildManager.updateBlockData(topLocation);
+        }
 
         event.setCancelled(true);
         event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
