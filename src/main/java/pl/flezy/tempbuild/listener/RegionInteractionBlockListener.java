@@ -14,6 +14,7 @@ import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerTakeLecternBookEvent;
 import org.bukkit.inventory.InventoryView;
 import pl.flezy.tempbuild.TempBuild;
 
@@ -68,6 +69,7 @@ public class RegionInteractionBlockListener implements Listener {
         }
 
         if (type == Material.LECTERN && lockedByMainFlag) {
+            event.setUseItemInHand(Event.Result.DENY);
             return;
         }
 
@@ -135,6 +137,19 @@ public class RegionInteractionBlockListener implements Listener {
         }
 
         if (event.getRawSlots().contains(0)) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
+    public void onTakeLecternBook(PlayerTakeLecternBookEvent event) {
+        Player player = event.getPlayer();
+        if (player.isOp()) {
+            return;
+        }
+
+        TempBuild plugin = TempBuild.getInstance();
+        if (plugin.regionFlagManager.isLocked(player, event.getLectern().getLocation(), plugin.OC_INTERACTION_LOCK_FLAG)) {
             event.setCancelled(true);
         }
     }
