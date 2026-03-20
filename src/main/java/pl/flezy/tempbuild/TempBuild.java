@@ -12,6 +12,7 @@ import pl.flezy.tempbuild.listener.BuildListener;
 import pl.flezy.tempbuild.listener.FireListener;
 import pl.flezy.tempbuild.manager.BlockDecayManager;
 import pl.flezy.tempbuild.manager.ConfigurationManager;
+import pl.flezy.tempbuild.manager.TempBlockStorage;
 import pl.flezy.tempbuild.manager.UltimateBlockRegenHook;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ public final class TempBuild extends JavaPlugin {
     public Config config;
     public StateFlag TEMP_BUILD_FLAG;
     public UltimateBlockRegenHook ultimateBlockRegenHook;
+    public TempBlockStorage tempBlockStorage;
 
     @Override
     public void onLoad() {
@@ -44,6 +46,10 @@ public final class TempBuild extends JavaPlugin {
     public void onEnable() {
         instance = this;
         config = ConfigurationManager.getConfig(this);
+        config.ensureBlockDecayTimesFilled();
+        config.save();
+        tempBlockStorage = new TempBlockStorage(this);
+        tempBlockStorage.initialize();
         ultimateBlockRegenHook = new UltimateBlockRegenHook(getServer().getPluginManager());
 
         if (ultimateBlockRegenHook.isHooked()) {
@@ -57,6 +63,14 @@ public final class TempBuild extends JavaPlugin {
         getCommand("tempbuild").setTabCompleter(new TempBuildCommand());
 
         BlockDecayManager.initialize();
+        BlockDecayManager.loadPersistedBlocks();
+    }
+
+    @Override
+    public void onDisable() {
+        if (tempBlockStorage != null) {
+            tempBlockStorage.close();
+        }
     }
 
     public static TempBuild getInstance() {
@@ -66,5 +80,7 @@ public final class TempBuild extends JavaPlugin {
     public void reload() {
         this.config.blockedBlocks = new ArrayList<>();
         this.config.load();
+        this.config.ensureBlockDecayTimesFilled();
+        this.config.save();
     }
 }
