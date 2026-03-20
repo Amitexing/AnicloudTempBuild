@@ -41,6 +41,31 @@ public class BlockDecayManager {
         }.runTaskTimer(TempBuild.getInstance(), ANIMATION_UPDATE_TICKS, ANIMATION_UPDATE_TICKS);
     }
 
+    public static void loadPersistedBlocks() {
+        TempBlockStorage storage = TempBuild.getInstance().tempBlockStorage;
+        if (storage == null) {
+            return;
+        }
+
+        for (TempBlockStorage.StoredTempBlock stored : storage.loadAll()) {
+            Location location = stored.location();
+            Block block = location.getBlock();
+
+            long expiresAt = stored.placeTimeMs() + stored.decayDurationMs();
+            if (System.currentTimeMillis() >= expiresAt) {
+                storage.delete(location);
+                continue;
+            }
+
+            if (block.getType() != stored.blockData().getMaterial()) {
+                storage.delete(location);
+                continue;
+            }
+
+            trackBlock(location, stored.blockData(), stored.placeTimeMs(), stored.decayDurationMs(), false);
+        }
+    }
+
     public static void addPlayerBlock(Location location) {
         Block block = location.getBlock();
         BlockData blockData = block.getBlockData();
@@ -49,13 +74,13 @@ public class BlockDecayManager {
         long decayTimeMs = decayTicks * 50L;
         long now = System.currentTimeMillis();
 
-        trackBlock(location, blockData, now, decayTimeMs);
+        trackBlock(location, blockData, now, decayTimeMs, true);
 
         if (blockData instanceof Bisected bisected && bisected.getHalf() == Bisected.Half.BOTTOM) {
             Location topLocation = location.clone().add(0, 1, 0);
             Block topBlock = topLocation.getBlock();
             if (topBlock.getBlockData() instanceof Bisected) {
-                trackBlock(topLocation, topBlock.getBlockData(), now, decayTimeMs);
+                trackBlock(topLocation, topBlock.getBlockData(), now, decayTimeMs, true);
             }
         }
     }
@@ -64,7 +89,7 @@ public class BlockDecayManager {
         clearBlock(location);
     }
 
-    private static void trackBlock(Location location, BlockData data, long placeTime, long decayTimeMs) {
+    private static void trackBlock(Location location, BlockData data, long placeTime, long decayTimeMs, boolean persist) {
         unregisterExpiration(location);
 
         placedBlocks.put(location, data);
@@ -75,6 +100,10 @@ public class BlockDecayManager {
         long expireAt = placeTime + decayTimeMs;
         blockExpireAt.put(location, expireAt);
         expirationBuckets.computeIfAbsent(expireAt, ignored -> new HashSet<>()).add(location);
+
+        if (persist && TempBuild.getInstance().tempBlockStorage != null) {
+            TempBuild.getInstance().tempBlockStorage.upsert(location, data, placeTime, decayTimeMs);
+        }
     }
 
     private static void processExpiredBlocks() {
@@ -148,6 +177,10 @@ public class BlockDecayManager {
 
     private static void clearBlock(Location location) {
         unregisterExpiration(location);
+
+        if (TempBuild.getInstance().tempBlockStorage != null) {
+            TempBuild.getInstance().tempBlockStorage.delete(location);
+        }
 
         Integer entityId = blockEntityIds.remove(location);
         if (entityId != null) {

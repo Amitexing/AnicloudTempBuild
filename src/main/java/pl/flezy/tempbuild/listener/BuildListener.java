@@ -32,6 +32,11 @@ public class BuildListener implements Listener {
         Location location = event.getBlock().getLocation();
         if (TempBuildManager.hasBypass(player, location)) return;
 
+        if (TempBuildManager.isDenied(player, location) && !player.hasPermission("anicloud.tempbuildbypass")) {
+            event.setCancelled(true);
+            return;
+        }
+
         if (!TempBuildManager.isDenied(player, location)) {
             Config config = TempBuild.getInstance().config;
 
