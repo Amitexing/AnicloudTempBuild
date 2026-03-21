@@ -57,7 +57,7 @@ public class TempBuildManager {
             return true;
         }
 
-        return isDenied(player, location);
+        return true;
     }
 
 
@@ -73,6 +73,15 @@ public class TempBuildManager {
 
     public static boolean isDoor(Material material) {
         return Tag.DOORS.isTagged(material);
+    }
+
+    public static boolean isInteractiveDoorLike(Material material) {
+        return Tag.DOORS.isTagged(material)
+                || Tag.TRAPDOORS.isTagged(material)
+                || Tag.FENCE_GATES.isTagged(material)
+                || Tag.BUTTONS.isTagged(material)
+                || Tag.PRESSURE_PLATES.isTagged(material)
+                || material == Material.LEVER;
     }
 
     public static boolean isLiquid(Material material) {
