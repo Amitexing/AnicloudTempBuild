@@ -18,7 +18,7 @@ import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerBucketEmptyEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.event.block.BlockFertilizeEvent;
 import pl.flezy.tempbuild.TempBuild;
 import pl.flezy.tempbuild.config.Config;
 import pl.flezy.tempbuild.manager.BlockDecayManager;
@@ -357,7 +357,7 @@ public class BuildListener implements Listener {
     @EventHandler
     public void onEmptyBucket(PlayerBucketEmptyEvent event) {
         Player player = event.getPlayer();
-        Block block = event.getBlock();
+        Block block = event.getBlockClicked().getRelative(event.getBlockFace());
         Location location = block.getLocation();
         if (!TempBuildManager.isDenied(player, location)) {
             Material insideBucketMaterial;
@@ -375,9 +375,64 @@ public class BuildListener implements Listener {
                 return;
             }
 
-            if (block.isEmpty()) {
+            org.bukkit.block.data.BlockData replacedData = block.getBlockData().clone();
+            Bukkit.getScheduler().runTask(TempBuild.getInstance(), () -> {
+                if (block.getType() == insideBucketMaterial) {
+                    BlockDecayManager.addPlayerBlock(location);
+                    TempBuild.getInstance().replacedPlantManager.saveReplacement(location, Map.of(location, replacedData));
+                }
+            });
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onToolTransform(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK || event.getClickedBlock() == null) {
+            return;
+        }
+
+        if (event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        Block clicked = event.getClickedBlock();
+        Location location = clicked.getLocation();
+        if (TempBuildManager.isDenied(player, location) || TempBuildManager.isTempBuildBlock(location)) {
+            return;
+        }
+
+        Material beforeType = clicked.getType();
+        org.bukkit.block.data.BlockData beforeData = clicked.getBlockData().clone();
+
+        Bukkit.getScheduler().runTask(TempBuild.getInstance(), () -> {
+            if (clicked.getType() != beforeType && !TempBuildManager.isTempBuildBlock(location)) {
                 BlockDecayManager.addPlayerBlock(location);
+                TempBuild.getInstance().replacedPlantManager.saveReplacement(location, Map.of(location, beforeData));
             }
+        });
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onBoneMeal(BlockFertilizeEvent event) {
+        if (event.getPlayer() == null || event.getBlocks().isEmpty()) {
+            return;
+        }
+
+        Player player = event.getPlayer();
+        if (TempBuildManager.isDenied(player, event.getBlock().getLocation())) {
+            return;
+        }
+
+        for (BlockState newState : event.getBlocks()) {
+            Location location = newState.getLocation();
+            org.bukkit.block.data.BlockData beforeData = location.getBlock().getBlockData().clone();
+            Bukkit.getScheduler().runTask(TempBuild.getInstance(), () -> {
+                if (!location.getBlock().getType().isAir() && !TempBuildManager.isTempBuildBlock(location)) {
+                    BlockDecayManager.addPlayerBlock(location);
+                    TempBuild.getInstance().replacedPlantManager.saveReplacement(location, Map.of(location, beforeData));
+                }
+            });
         }
     }
 }

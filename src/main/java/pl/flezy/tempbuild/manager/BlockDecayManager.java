@@ -83,10 +83,33 @@ public class BlockDecayManager {
                 trackBlock(topLocation, topBlock.getBlockData(), now, decayTimeMs, true);
             }
         }
+
+        org.bukkit.Bukkit.getScheduler().runTask(TempBuild.getInstance(), () -> {
+            updateTrackedBlockData(location);
+            updateTrackedBlockData(location.clone().add(1, 0, 0));
+            updateTrackedBlockData(location.clone().add(-1, 0, 0));
+            updateTrackedBlockData(location.clone().add(0, 0, 1));
+            updateTrackedBlockData(location.clone().add(0, 0, -1));
+        });
     }
 
     public static void untrackBlock(Location location) {
         clearBlock(location);
+    }
+
+    public static void updateTrackedBlockData(Location location) {
+        if (!placedBlocks.containsKey(location)) {
+            return;
+        }
+
+        BlockData currentData = location.getBlock().getBlockData();
+        placedBlocks.put(location, currentData);
+
+        Long placeTime = blockPlaceTime.get(location);
+        Long decayDuration = blockDecayDuration.get(location);
+        if (placeTime != null && decayDuration != null && TempBuild.getInstance().tempBlockStorage != null) {
+            TempBuild.getInstance().tempBlockStorage.upsert(location, currentData, placeTime, decayDuration);
+        }
     }
 
     private static void trackBlock(Location location, BlockData data, long placeTime, long decayTimeMs, boolean persist) {

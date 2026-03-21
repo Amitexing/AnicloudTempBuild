@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public final class ReplaceablePlantHelper {
+    private static final Tag<Material> TALL_FLOWERS_TAG = resolveTag("TALL_FLOWERS");
     private static final Set<Material> EXTRA_REPLACEABLE = Stream.of(
                     "GRASS",
                     "SHORT_GRASS",
@@ -44,7 +45,7 @@ public final class ReplaceablePlantHelper {
                 || Tag.SAPLINGS.isTagged(material)
                 || Tag.CROPS.isTagged(material)
                 || EXTRA_REPLACEABLE.contains(material)
-                || Tag.TALL_FLOWERS.isTagged(material);
+                || (TALL_FLOWERS_TAG != null && TALL_FLOWERS_TAG.isTagged(material));
     }
 
     public static boolean isDoublePlant(BlockData data) {
@@ -81,5 +82,14 @@ public final class ReplaceablePlantHelper {
                 || material == Material.SWEET_BERRY_BUSH
                 || material == torchflowerCrop
                 || material == pitcherCrop;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Tag<Material> resolveTag(String name) {
+        try {
+            return (Tag<Material>) Tag.class.getField(name).get(null);
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            return null;
+        }
     }
 }
