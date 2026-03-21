@@ -22,7 +22,10 @@ import org.bukkit.scheduler.BukkitTask;
 import pl.flezy.tempbuild.TempBuild;
 import pl.flezy.tempbuild.config.Config;
 import pl.flezy.tempbuild.manager.BlockDecayManager;
+import pl.flezy.tempbuild.manager.ReplaceablePlantHelper;
 import pl.flezy.tempbuild.manager.TempBuildManager;
+
+import java.util.Map;
 
 public class BuildListener implements Listener {
     private static final int ULTIMATE_BLOCK_REGEN_CLEANUP_TICKS = 60;
@@ -42,14 +45,22 @@ public class BuildListener implements Listener {
             Config config = TempBuild.getInstance().config;
 
             Block block = event.getBlock();
+            if (!config.isBlockEnabled(block.getType())) {
+                event.setCancelled(true);
+                return;
+            }
+
             if (config.blockedBlocks.contains(block.getType())) {
                 event.setCancelled(true);
                 return;
             }
 
+            Map<Location, org.bukkit.block.data.BlockData> replacedPlantParts = java.util.Collections.emptyMap();
             if (!BlockDecayManager.placedBlocks.containsKey(location)) {
                 BlockState replacedBlockState = event.getBlockReplacedState();
-                if (replacedBlockState.isCollidable()) {
+                boolean replaceablePlant = ReplaceablePlantHelper.isReplaceablePlant(replacedBlockState.getType());
+
+                if (replacedBlockState.isCollidable() && !replaceablePlant) {
                     event.setCancelled(true);
                     return;
                 }
@@ -57,6 +68,7 @@ public class BuildListener implements Listener {
                 if (!replacedBlockState.isCollidable() &&
                         !TempBuildManager.isLiquid(replacedBlockState.getType()) &&
                         !replacedBlockState.getType().isEmpty() &&
+                        !replaceablePlant &&
                         !config.allowReplaceNonCollidableBlocks) {
                     event.setCancelled(true);
                     return;
@@ -67,9 +79,23 @@ public class BuildListener implements Listener {
                     event.setCancelled(true);
                     return;
                 }
+
+                if (replaceablePlant) {
+                    replacedPlantParts = TempBuild.getInstance().replacedPlantManager
+                            .captureReplacedPlant(location, replacedBlockState.getBlockData());
+
+                    for (Location partLocation : replacedPlantParts.keySet()) {
+                        if (!partLocation.equals(location)) {
+                            partLocation.getBlock().setType(Material.AIR, false);
+                        }
+                    }
+                }
             }
 
             BlockDecayManager.addPlayerBlock(location);
+            if (!replacedPlantParts.isEmpty()) {
+                TempBuild.getInstance().replacedPlantManager.saveReplacement(location, replacedPlantParts);
+            }
         }
     }
 
@@ -201,6 +227,8 @@ public class BuildListener implements Listener {
             clearBlockForTempBuildBreak(player, bottomLocation.getBlock());
             topLocation.getBlock().setType(Material.AIR, false);
 
+            TempBuild.getInstance().replacedPlantManager.restoreAndForget(bottomLocation);
+            TempBuild.getInstance().replacedPlantManager.restoreAndForget(topLocation);
             scheduleUltimateBlockRegenDelayBlockCleanup(bottomLocation);
             scheduleUltimateBlockRegenDelayBlockCleanup(topLocation);
             return;
@@ -208,6 +236,7 @@ public class BuildListener implements Listener {
 
         BlockDecayManager.untrackBlock(location);
         clearBlockForTempBuildBreak(player, block);
+        TempBuild.getInstance().replacedPlantManager.restoreAndForget(location);
         scheduleUltimateBlockRegenDelayBlockCleanup(location);
     }
 

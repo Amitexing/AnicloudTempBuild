@@ -16,6 +16,7 @@ import pl.flezy.tempbuild.listener.RegionInteractionEntityListener;
 import pl.flezy.tempbuild.manager.BlockDecayManager;
 import pl.flezy.tempbuild.manager.ConfigurationManager;
 import pl.flezy.tempbuild.manager.RegionFlagManager;
+import pl.flezy.tempbuild.manager.ReplacedPlantManager;
 import pl.flezy.tempbuild.manager.TempBlockStorage;
 import pl.flezy.tempbuild.manager.UltimateBlockRegenHook;
 
@@ -32,6 +33,7 @@ public final class TempBuild extends JavaPlugin {
     public UltimateBlockRegenHook ultimateBlockRegenHook;
     public TempBlockStorage tempBlockStorage;
     public RegionFlagManager regionFlagManager;
+    public ReplacedPlantManager replacedPlantManager;
 
     @Override
     public void onLoad() {
@@ -74,6 +76,8 @@ public final class TempBuild extends JavaPlugin {
         tempBlockStorage = new TempBlockStorage(this);
         tempBlockStorage.initialize();
         regionFlagManager = new RegionFlagManager();
+        replacedPlantManager = new ReplacedPlantManager();
+        replacedPlantManager.loadPersisted();
         ultimateBlockRegenHook = new UltimateBlockRegenHook(getServer().getPluginManager());
 
         if (ultimateBlockRegenHook.isHooked()) {

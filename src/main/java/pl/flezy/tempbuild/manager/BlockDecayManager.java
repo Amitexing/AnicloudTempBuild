@@ -125,6 +125,7 @@ public class BlockDecayManager {
                 Block block = location.getBlock();
                 BlockData expectedData = placedBlocks.get(location);
                 if (expectedData == null || block.getType() != expectedData.getMaterial()) {
+                    TempBuild.getInstance().replacedPlantManager.removeWithoutRestore(location);
                     clearBlock(location);
                     continue;
                 }
@@ -203,11 +204,13 @@ public class BlockDecayManager {
         }
 
         block.setType(Material.AIR);
+        TempBuild.getInstance().replacedPlantManager.restoreAndForget(location);
 
         if (data instanceof Bisected bisected && bisected.getHalf() == Bisected.Half.BOTTOM) {
             Location topLocation = location.clone().add(0, 1, 0);
             clearBlock(topLocation);
             topLocation.getBlock().setType(Material.AIR);
+            TempBuild.getInstance().replacedPlantManager.restoreAndForget(topLocation);
         }
     }
 }
