@@ -6,25 +6,31 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Bisected;
 
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class ReplaceablePlantHelper {
-    private static final Set<Material> EXTRA_REPLACEABLE = Set.of(
-            Material.GRASS,
-            Material.TALL_GRASS,
-            Material.FERN,
-            Material.LARGE_FERN,
-            Material.DEAD_BUSH,
-            Material.SWEET_BERRY_BUSH,
-            Material.SUGAR_CANE,
-            Material.BAMBOO,
-            Material.CACTUS,
-            Material.NETHER_SPROUTS,
-            Material.CRIMSON_ROOTS,
-            Material.WARPED_ROOTS,
-            Material.HANGING_ROOTS,
-            Material.PITCHER_CROP,
-            Material.TORCHFLOWER_CROP
-    );
+    private static final Set<Material> EXTRA_REPLACEABLE = Stream.of(
+                    "GRASS",
+                    "SHORT_GRASS",
+                    "TALL_GRASS",
+                    "FERN",
+                    "LARGE_FERN",
+                    "DEAD_BUSH",
+                    "SWEET_BERRY_BUSH",
+                    "SUGAR_CANE",
+                    "BAMBOO",
+                    "CACTUS",
+                    "NETHER_SPROUTS",
+                    "CRIMSON_ROOTS",
+                    "WARPED_ROOTS",
+                    "HANGING_ROOTS",
+                    "PITCHER_CROP",
+                    "TORCHFLOWER_CROP"
+            )
+            .map(Material::matchMaterial)
+            .filter(java.util.Objects::nonNull)
+            .collect(Collectors.toSet());
 
     private ReplaceablePlantHelper() {
     }
@@ -35,9 +41,7 @@ public final class ReplaceablePlantHelper {
                 : Tag.FLOWERS.isTagged(material)
                 || Tag.SAPLINGS.isTagged(material)
                 || Tag.CROPS.isTagged(material)
-                || material == Material.SHORT_GRASS
                 || EXTRA_REPLACEABLE.contains(material)
-                || Tag.SMALL_FLOWERS.isTagged(material)
                 || Tag.TALL_FLOWERS.isTagged(material);
     }
 
