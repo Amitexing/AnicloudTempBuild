@@ -30,6 +30,7 @@ public final class TempBuild extends JavaPlugin {
     public StateFlag OC_INTERACTION_LOCK_FLAG;
     public StateFlag CAMPFIRE_INTERACTION_LOCK_FLAG;
     public StateFlag TRAPDOOR_LOCK_FLAG;
+    public StateFlag CROP_LOCK_FLAG;
     public UltimateBlockRegenHook ultimateBlockRegenHook;
     public TempBlockStorage tempBlockStorage;
     public RegionFlagManager regionFlagManager;
@@ -42,6 +43,7 @@ public final class TempBuild extends JavaPlugin {
         OC_INTERACTION_LOCK_FLAG = registerStateFlag(registry, "oc-interaction-lock");
         CAMPFIRE_INTERACTION_LOCK_FLAG = registerStateFlag(registry, "campfire-interaction-lock");
         TRAPDOOR_LOCK_FLAG = registerStateFlag(registry, "trapdoor-lock");
+        CROP_LOCK_FLAG = registerStateFlag(registry, "crop-lock");
     }
 
     private StateFlag registerStateFlag(FlagRegistry registry, String name) {

@@ -17,6 +17,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTakeLecternBookEvent;
 import org.bukkit.inventory.InventoryView;
 import pl.flezy.tempbuild.TempBuild;
+import pl.flezy.tempbuild.manager.ReplaceablePlantHelper;
 
 import java.util.Set;
 
@@ -64,7 +65,12 @@ public class RegionInteractionBlockListener implements Listener {
         boolean lockedSign = Tag.ALL_SIGNS.isTagged(type) &&
                 plugin.regionFlagManager.isLocked(player, clicked.getLocation(), plugin.OC_INTERACTION_LOCK_FLAG);
 
-        if (!lockedByMainFlag && !lockedByCampfireFlag && !lockedByTrapdoorFlag && !lockedSign) {
+        boolean lockedCropPlanting = event.getAction() == Action.RIGHT_CLICK_BLOCK
+                && event.getItem() != null
+                && ReplaceablePlantHelper.isPlantingMaterial(event.getItem().getType())
+                && plugin.regionFlagManager.isLocked(player, clicked.getLocation(), plugin.CROP_LOCK_FLAG);
+
+        if (!lockedByMainFlag && !lockedByCampfireFlag && !lockedByTrapdoorFlag && !lockedSign && !lockedCropPlanting) {
             return;
         }
 

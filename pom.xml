@@ -6,7 +6,7 @@
     <groupId>pl.flezy</groupId>
     <artifactId>AnicloudTempBuild</artifactId>
     <name>AnicloudTempBuild</name>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <packaging>jar</packaging>
 
     <properties>

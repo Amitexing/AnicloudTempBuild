@@ -41,6 +41,13 @@ public class BuildListener implements Listener {
             return;
         }
 
+        if (!player.isOp() &&
+                TempBuild.getInstance().regionFlagManager.isLocked(player, location, TempBuild.getInstance().CROP_LOCK_FLAG) &&
+                ReplaceablePlantHelper.isPlantingMaterial(event.getBlock().getType())) {
+            event.setCancelled(true);
+            return;
+        }
+
         if (!TempBuildManager.isDenied(player, location)) {
             Config config = TempBuild.getInstance().config;
 
@@ -59,8 +66,9 @@ public class BuildListener implements Listener {
             if (!BlockDecayManager.placedBlocks.containsKey(location)) {
                 BlockState replacedBlockState = event.getBlockReplacedState();
                 boolean replaceablePlant = ReplaceablePlantHelper.isReplaceablePlant(replacedBlockState.getType());
+                boolean replaceableForTempBuild = ReplaceablePlantHelper.isReplaceableForTempBuild(replacedBlockState);
 
-                if (replacedBlockState.isCollidable() && !replaceablePlant) {
+                if (replacedBlockState.isCollidable() && !replaceableForTempBuild) {
                     event.setCancelled(true);
                     return;
                 }
@@ -68,7 +76,7 @@ public class BuildListener implements Listener {
                 if (!replacedBlockState.isCollidable() &&
                         !TempBuildManager.isLiquid(replacedBlockState.getType()) &&
                         !replacedBlockState.getType().isEmpty() &&
-                        !replaceablePlant &&
+                        !replaceableForTempBuild &&
                         !config.allowReplaceNonCollidableBlocks) {
                     event.setCancelled(true);
                     return;
