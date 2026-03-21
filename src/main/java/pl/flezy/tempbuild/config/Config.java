@@ -4,11 +4,17 @@ import eu.okaeri.configs.OkaeriConfig;
 import eu.okaeri.configs.annotation.Comment;
 import org.bukkit.Material;
 
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 public class Config extends OkaeriConfig {
-    @Comment("Time in seconds before placed blocks decay and disappear")
-    public int blockDecayTime = 30;
+    @Comment("Time in minutes before placed blocks decay and disappear")
+    public int blockDecayTime = 10080;
+    @Comment("Per-block decay time in minutes for placed temp-build blocks (all block materials are auto-populated)")
+    public Map<Material, Integer> blockDecayTimes = new EnumMap<>(Material.class);
+    @Comment("Per-block settings for temp-build usage and destroy time (minutes)")
+    public Map<Material, BlockConfigEntry> blocks = new EnumMap<>(Material.class);
     @Comment("Whether decaying blocks should drop items when they disappear")
     public boolean dropBlocks = true;
     @Comment("Whether blocks in the region should be protected from explosions")
@@ -32,4 +38,38 @@ public class Config extends OkaeriConfig {
     );
     @Comment("Allow breaking UltimateBlockRegen replacement blocks (bedrock) in temp-build regions")
     public boolean allowBreakUltimateBlockRegenBlocks = true;
+
+    public void ensureBlockDecayTimesFilled() {
+        for (Material material : Material.values()) {
+            if (!material.isBlock()) {
+                continue;
+            }
+
+            blockDecayTimes.putIfAbsent(material, blockDecayTime);
+            blocks.computeIfAbsent(material, ignored -> {
+                BlockConfigEntry entry = new BlockConfigEntry();
+                entry.enabled = true;
+                entry.destroyTime = blockDecayTimes.get(material);
+                return entry;
+            });
+        }
+    }
+
+    public int getDecayTimeMinutes(Material material) {
+        BlockConfigEntry entry = blocks.get(material);
+        if (entry != null) {
+            return entry.destroyTime;
+        }
+
+        return blockDecayTimes.getOrDefault(material, blockDecayTime);
+    }
+
+    public boolean isBlockEnabled(Material material) {
+        BlockConfigEntry entry = blocks.get(material);
+        if (entry != null) {
+            return entry.enabled;
+        }
+
+        return true;
+    }
 }
