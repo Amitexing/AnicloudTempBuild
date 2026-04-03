@@ -1,0 +1,15 @@
+1:
+  CHANCE: 10%
+  REWARDS:
+    - 'ITEM : NETHERITE_SWORD : 1'
+    - 'CONSOLE : lp user %player% permission settemp anicloud.perm false 1mins'
+
+2:
+  CHANCE: 5%
+  REWARDS:
+    - 'CONSOLE : nexodrop mark5_boots 1 %block_location% %world%'
+
+3:
+  CHANCE: 10%
+  REWARDS:
+    - 'CONSOLE : lp user %player% permission settemp anicloud.perm false 1mins'
