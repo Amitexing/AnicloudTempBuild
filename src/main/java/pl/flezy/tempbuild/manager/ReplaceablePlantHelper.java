@@ -7,34 +7,35 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Bisected;
 import org.bukkit.block.data.type.Snow;
 
-import java.util.EnumSet;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public final class ReplaceablePlantHelper {
-    private static final Set<Material> TALL_FLOWERS = EnumSet.of(
-            Material.SUNFLOWER,
-            Material.LILAC,
-            Material.ROSE_BUSH,
-            Material.PEONY
+    private static final Set<Material> TALL_FLOWERS = materialsFromNames(
+            "SUNFLOWER",
+            "LILAC",
+            "ROSE_BUSH",
+            "PEONY"
     );
 
-    private static final Set<Material> EXTRA_REPLACEABLE = EnumSet.of(
-            Material.GRASS,
-            Material.SHORT_GRASS,
-            Material.TALL_GRASS,
-            Material.FERN,
-            Material.LARGE_FERN,
-            Material.DEAD_BUSH,
-            Material.SWEET_BERRY_BUSH,
-            Material.SUGAR_CANE,
-            Material.BAMBOO,
-            Material.CACTUS,
-            Material.NETHER_SPROUTS,
-            Material.CRIMSON_ROOTS,
-            Material.WARPED_ROOTS,
-            Material.HANGING_ROOTS,
-            Material.PITCHER_CROP,
-            Material.TORCHFLOWER_CROP
+    private static final Set<Material> EXTRA_REPLACEABLE = materialsFromNames(
+            "GRASS",
+            "SHORT_GRASS",
+            "TALL_GRASS",
+            "FERN",
+            "LARGE_FERN",
+            "DEAD_BUSH",
+            "SWEET_BERRY_BUSH",
+            "SUGAR_CANE",
+            "BAMBOO",
+            "CACTUS",
+            "NETHER_SPROUTS",
+            "CRIMSON_ROOTS",
+            "WARPED_ROOTS",
+            "HANGING_ROOTS",
+            "PITCHER_CROP",
+            "TORCHFLOWER_CROP"
     );
 
     private ReplaceablePlantHelper() {
@@ -76,11 +77,15 @@ public final class ReplaceablePlantHelper {
                 || Tag.SAPLINGS.isTagged(material)
                 || Tag.FLOWERS.isTagged(material)
                 || TALL_FLOWERS.contains(material)
-                || material == Material.SUGAR_CANE
-                || material == Material.BAMBOO
-                || material == Material.CACTUS
-                || material == Material.SWEET_BERRY_BUSH
-                || material == Material.TORCHFLOWER_CROP
-                || material == Material.PITCHER_CROP;
+                || EXTRA_REPLACEABLE.contains(material);
+    }
+
+    private static Set<Material> materialsFromNames(String... names) {
+        Set<Material> result = new HashSet<>();
+        Arrays.stream(names)
+                .map(Material::matchMaterial)
+                .filter(java.util.Objects::nonNull)
+                .forEach(result::add);
+        return result;
     }
 }
